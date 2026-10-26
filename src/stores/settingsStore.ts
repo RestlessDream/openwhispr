@@ -329,6 +329,7 @@ const ARRAY_SETTINGS = new Set([
   "mcalAccounts",
   "onboardingUseCases",
   "spokenLanguages",
+  "autoDetectLanguages",
   "translationTargets",
 ]);
 
@@ -1130,6 +1131,7 @@ export interface SettingsState
   setFallbackWhisperModel: (value: string) => void;
   setPreferredLanguage: (value: string) => void;
   setChineseScriptPreference: (value: ChineseScriptPreference) => void;
+  setAutoDetectLanguages: (languages: string[]) => void;
   setCloudTranscriptionProvider: (value: string) => void;
   setCloudTranscriptionModel: (value: string) => void;
   setCloudTranscriptionBaseUrl: (value: string) => void;
@@ -1542,6 +1544,7 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
   chineseScriptPreference: normalizeChineseScriptPreference(
     readString("chineseScriptPreference", "as-transcribed")
   ),
+  autoDetectLanguages: readStringArray("autoDetectLanguages", []),
   cloudTranscriptionProvider: readString(
     "cloudTranscriptionProvider",
     DEFAULT_CLOUD_TRANSCRIPTION_PROVIDER
@@ -2056,6 +2059,11 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
   setPreferredLanguage: createStringSetter("preferredLanguage"),
   setChineseScriptPreference: (value: ChineseScriptPreference) =>
     createStringSetter("chineseScriptPreference")(normalizeChineseScriptPreference(value)),
+  setAutoDetectLanguages: (languages: string[]) => {
+    if (isBrowser) localStorage.setItem("autoDetectLanguages", JSON.stringify(languages));
+    useSettingsStore.setState({ autoDetectLanguages: languages });
+    if (isBrowser) window.electronAPI?.setWhisperAutoDetectLanguages?.(languages);
+  },
   setCloudTranscriptionProvider: createStringSetter("cloudTranscriptionProvider"),
   setCloudTranscriptionModel: createStringSetter("cloudTranscriptionModel"),
   setCloudTranscriptionBaseUrl: createStringSetter("cloudTranscriptionBaseUrl"),
@@ -2626,6 +2634,8 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
       s.setPreferredLanguage(settings.preferredLanguage);
     if (settings.chineseScriptPreference !== undefined)
       s.setChineseScriptPreference(settings.chineseScriptPreference);
+    if (settings.autoDetectLanguages !== undefined)
+      s.setAutoDetectLanguages(settings.autoDetectLanguages);
     if (settings.cloudTranscriptionProvider !== undefined)
       s.setCloudTranscriptionProvider(settings.cloudTranscriptionProvider);
     if (settings.cloudTranscriptionModel !== undefined)
@@ -3744,6 +3754,18 @@ export async function initializeSettings(): Promise<void> {
     } catch (err) {
       logger.warn(
         "Failed to sync speaker diarization preference on startup",
+        { error: (err as Error).message },
+        "settings"
+      );
+    }
+
+    try {
+      await window.electronAPI.setWhisperAutoDetectLanguages?.(
+        useSettingsStore.getState().autoDetectLanguages
+      );
+    } catch (err) {
+      logger.warn(
+        "Failed to sync auto-detect languages on startup",
         { error: (err as Error).message },
         "settings"
       );

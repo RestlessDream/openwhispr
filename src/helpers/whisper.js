@@ -13,6 +13,7 @@ const {
 } = require("./downloadUtils");
 const WhisperServerManager = require("./whisperServer");
 const { createAbortError } = require("./abortError");
+const { normalizeAutoDetectLanguages, resolveLanguageToForce } = require("./autoDetectLanguages");
 const {
   getCacheRoot,
   getModelsDirForService,
@@ -107,6 +108,32 @@ class WhisperManager {
     this._rewarmInFlight = false;
     this._cudaBinaryManager = null;
     this._vulkanBinaryManager = null;
+    this.autoDetectLanguages = [];
+  }
+
+  setAutoDetectLanguages(languageCodes) {
+    this.autoDetectLanguages = normalizeAutoDetectLanguages(languageCodes);
+    return this.autoDetectLanguages;
+  }
+
+  async _inferWithinAutoDetectLanguages(audioBuffer, options) {
+    const autoDetecting = !options.language || options.language === "auto";
+    if (!autoDetecting || this.autoDetectLanguages.length === 0) {
+      return this.serverManager.transcribe(audioBuffer, options);
+    }
+
+    const firstPass = await this.serverManager.transcribe(audioBuffer, {
+      ...options,
+      responseFormat: "verbose_json",
+    });
+    if (!this.parseWhisperResult(firstPass).success) return firstPass;
+    const languageToForce = resolveLanguageToForce(firstPass, this.autoDetectLanguages);
+    if (!languageToForce) return firstPass;
+
+    debugLogger.info("Detected language is outside the auto-detect languages, decoding again", {
+      forced: languageToForce,
+    });
+    return this.serverManager.transcribe(audioBuffer, { ...options, language: languageToForce });
   }
 
   setGpuBinaryManagers({ cuda, vulkan }) {
@@ -572,7 +599,7 @@ class WhisperManager {
     });
 
     const startTime = Date.now();
-    const result = await this.serverManager.transcribe(audioBuffer, {
+    const result = await this._inferWithinAutoDetectLanguages(audioBuffer, {
       language,
       initialPrompt,
       signal: options.signal,

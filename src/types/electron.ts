@@ -3545,6 +3545,9 @@ declare global {
         speechPadMs?: number;
         samplesOverlap?: number;
       }) => Promise<{ success: boolean; config?: Record<string, unknown>; error?: string }>;
+      setWhisperAutoDetectLanguages?: (
+        languageCodes: string[]
+      ) => Promise<{ success: boolean; languages?: string[]; error?: string }>;
       onMeetingNotificationData?: (callback: (data: MeetingNotificationData) => void) => () => void;
       onMeetingAutoEndRequested?: (
         callback: (request: MeetingAutoEndRequest) => void

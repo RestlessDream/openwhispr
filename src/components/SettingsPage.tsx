@@ -161,6 +161,7 @@ import EnterpriseCheckoutDialog from "./settings/EnterpriseCheckoutDialog";
 import CreateWorkspaceDialog from "./CreateWorkspaceDialog";
 import ProfileSection from "./settings/ProfileSection";
 import ToneStyleSection from "./settings/ToneStyleSection";
+import AutoDetectLanguagesSetting from "./settings/AutoDetectLanguagesSetting";
 import { formatAmount } from "../utils/formatAmount";
 import { enterpriseProviderName, getTranscriptionProvider } from "../models/ModelRegistry";
 import { useManagedScopeResolution } from "../stores/enterpriseIdentityStore";
@@ -3301,6 +3302,7 @@ export default function SettingsPage({
                     />
                   </SettingsRow>
                 </SettingsPanelRow>
+                {preferredLanguage === "auto" && <AutoDetectLanguagesSetting />}
                 {preferredLanguage === "auto" && (
                   <SettingsPanelRow>
                     <SettingsRow

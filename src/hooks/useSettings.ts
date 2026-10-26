@@ -36,6 +36,8 @@ export interface TranscriptionSettings {
   preferredLanguage: string;
   /** When transcription language is Auto, force Chinese output script. See #975. */
   chineseScriptPreference: ChineseScriptPreference;
+  /** When transcription language is Auto, local Whisper may only land on these. Empty = any. */
+  autoDetectLanguages: string[];
   cloudTranscriptionProvider: string;
   cloudTranscriptionModel: string;
   cloudTranscriptionBaseUrl?: string;
@@ -301,6 +303,7 @@ function useSettingsInternal() {
     fallbackWhisperModel: store.fallbackWhisperModel,
     preferredLanguage: store.preferredLanguage,
     chineseScriptPreference: store.chineseScriptPreference,
+    autoDetectLanguages: store.autoDetectLanguages,
     cloudTranscriptionProvider: store.cloudTranscriptionProvider,
     cloudTranscriptionModel: store.cloudTranscriptionModel,
     cloudTranscriptionBaseUrl: store.cloudTranscriptionBaseUrl,

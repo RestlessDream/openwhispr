@@ -1419,6 +1419,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.invoke("meeting-set-session-speaker-config", config),
   getWhisperVadConfig: () => ipcRenderer.invoke("whisper-vad-get-config"),
   setWhisperVadConfig: (config) => ipcRenderer.invoke("whisper-vad-set-config", config),
+  setWhisperAutoDetectLanguages: (languageCodes) =>
+    ipcRenderer.invoke("whisper-set-auto-detect-languages", languageCodes),
   onMeetingNotificationData: registerListener(
     "meeting-notification-data",
     (callback) => (_event, data) => callback(data)

@@ -99,6 +99,19 @@ test("sends the decoder threshold fields even without an initial prompt", async 
   assert.equal(fieldValue(body, "response_format"), "json");
 });
 
+test("asks for verbose_json when the caller needs the detected language", async (t) => {
+  const { server, port, getBody } = await startCapturingServer();
+  t.after(() => server.close());
+
+  const manager = createManager(port);
+  await manager.transcribe(Buffer.from("audio"), {
+    language: "auto",
+    responseFormat: "verbose_json",
+  });
+
+  assert.equal(fieldValue(getBody(), "response_format"), "verbose_json");
+});
+
 test("skipDecoderThresholds omits the raised fields so the server keeps its defaults", async (t) => {
   const { server, port, getBody } = await startCapturingServer();
   t.after(() => server.close());

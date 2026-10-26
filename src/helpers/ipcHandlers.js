@@ -12443,6 +12443,15 @@ class IPCHandlers {
       }
     });
 
+    ipcMain.handle("whisper-set-auto-detect-languages", async (_event, languageCodes) => {
+      try {
+        const languages = this.whisperManager.setAutoDetectLanguages(languageCodes);
+        return { success: true, languages };
+      } catch (error) {
+        return { success: false, error: error.message };
+      }
+    });
+
     ipcMain.handle("meeting-set-session-speaker-config", async (_event, payload) => {
       try {
         const enabled = payload?.enabled !== false;
